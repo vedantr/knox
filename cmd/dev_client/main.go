@@ -130,5 +130,7 @@ func main() {
 			Metrics: func(map[string]uint64) {}},
 		tokenEndpoint,
 		clientID,
-		"")
+		"",
+		nil,
+	)
 }

@@ -59,12 +59,19 @@ type VisibilityParams struct {
 var logf = func(string, ...interface{}) {}
 var errorf = func(string, ...interface{}) {}
 var daemonReportMetrics = func(map[string]uint64) {}
+var dispatchLoginFunction = func(string, string) ([]byte, error) { return make([]byte, 0), nil }
 var knoxAuthClientID = ""
 var knoxOAuthTokenEndpoint = ""
 var knoxTokenFileLocation = ""
 
 // Run is how to execute commands. It uses global variables and isn't safe to call in parallel.
-func Run(client knox.APIClient, p *VisibilityParams, tokenEndpoint, clientID string, homeRelativeTokenFileLocation string) {
+func Run(
+	client knox.APIClient,
+	p *VisibilityParams, tokenEndpoint,
+	clientID string,
+	homeRelativeTokenFileLocation string,
+	dispatchLoginFunction func(string, string) ([]byte, error)) {
+
 	cli = client
 	if p != nil {
 		if p.Logf != nil {
@@ -77,9 +84,14 @@ func Run(client knox.APIClient, p *VisibilityParams, tokenEndpoint, clientID str
 			daemonReportMetrics = p.Metrics
 		}
 	}
+
 	knoxAuthClientID = clientID
 	knoxOAuthTokenEndpoint = tokenEndpoint
 	knoxTokenFileLocation = homeRelativeTokenFileLocation
+
+	if dispatchLoginFunction == nil {
+		dispatchLoginFunction = defaultDispatchLoginFunction
+	}
 
 	if homeRelativeTokenFileLocation == "" {
 		knoxTokenFileLocation = defaultTokenFileLocation

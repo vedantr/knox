@@ -57,12 +57,22 @@ func runLogin(cmd *Command, args []string) {
 		fatalf("Problem getting password:" + err.Error())
 	}
 
+	data, err := dispatchLoginFunction(username, string(password))
+
+	authFile := path.Join(u.HomeDir, knoxTokenFileLocation)
+	err = ioutil.WriteFile(authFile, data, 0600)
+	if err != nil {
+		fatalf("Failed to write auth data to file" + err.Error())
+	}
+}
+
+func defaultDispatchLoginFunction(username, password string) ([]byte, error) {
 	resp, err := http.PostForm(knoxOAuthTokenEndpoint,
 		url.Values{
 			"grant_type": {"password"},
 			"client_id":  {knoxAuthClientID},
 			"username":   {username},
-			"password":   {string(password)},
+			"password":   {password},
 		})
 	if err != nil {
 		fatalf("Error connecting to auth:" + err.Error())
@@ -79,10 +89,6 @@ func runLogin(cmd *Command, args []string) {
 	if authResp.Error != "" {
 		fatalf("Fail to authenticate: %q", authResp.Error)
 	}
-	authFile := path.Join(u.HomeDir, knoxTokenFileLocation)
-	err = ioutil.WriteFile(authFile, data, 0600)
-	if err != nil {
-		fatalf("Failed to write auth data to file" + err.Error())
-	}
 
+	return data, nil
 }
